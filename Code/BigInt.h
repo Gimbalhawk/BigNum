@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <string>
+#include <cstring>
 
 #include <vector>
 
@@ -9,10 +10,10 @@
 #define _CHUNK_BIT_SIZE 32
 #define _CHUNK_BIT_MASK 0x00000000
 
-//typedef uint32_t uint32;
-
 class BigInt
 {
+	typedef uint32_t chunk;
+
 private:
 	inline size_t memsize() const { return chunks.size() * _CHUNK_BYTE_SIZE; } 
 
@@ -64,13 +65,13 @@ private:
 	// Checks whether there are any non-zero bits at or after the chunk given by the index
 	bool onlyEmptyChunksRemain(unsigned int index) const
 	{
-		while (index < chunks.size()) if (chunks[index]) return false;
+		while (index < chunks.size()) if (chunks[index++]) return false;
 		return true;
 	}
 
 	inline bool mostSignificantBit(int i)
 	{
-		return (i & 0x80000000) != NULL;
+		return (i & 0x80000000) != 0;
 	}
 
 	
@@ -81,19 +82,20 @@ public:
 	bool operator==(const int &other) const
 	{
 		int comp = other > 0 ? other : -other;
-		if (sign && comp != other || !sign && comp == other) return false;
 
-		int memsize = chunks.size() * _CHUNK_BYTE_SIZE;
-		
+		// If the two numbers have different signs then the can't be equal
+		if ((sign && comp != other) || (!sign && comp == other)) return false;
+
+		unsigned int memsize = chunks.size() * _CHUNK_BYTE_SIZE;
 		if (memsize < sizeof(int))
 		{
-			if (memcmp(&chunks.begin(), &comp, memsize) != 0) return false;
+			if (memcmp(&chunks.front(), &comp, memsize) != 0) return false;
 
 			// If an int is larger than our memsize, then compare the remaining bytes
 			// of the int with zero. This can happen if our value is 0 or if we're on
 			// a 64 bit machine and we only have one chunk of memory.
-			int zero = 0;
-			return memcmp(&zero, &comp + memsize, sizeof(int) - memsize) == 0;
+			chunk zero = 0;
+			return memcmp(&zero, &comp + memsize, sizeof(chunk) - memsize) == 0;
 		}
 		else
 		{
@@ -121,50 +123,87 @@ public:
 	}
 
 	////////////////////////////
-	// Operators : Addition
+	// Operators : +
 	////////////////////////////
-	BigInt operator+(const int &other)
+	BigInt operator+(const int& other)
 	{
-		//if (other < 0) return *this - -other;
-
-		BigInt result;
-
-		uint32_t swap;
-		bool overflow = false;
-
-		for (int offset = 0; offset * _CHUNK_BYTE_SIZE < sizeof(other); ++offset)
+		if (other < 0)
 		{
-			memcpy(&swap, &other, _CHUNK_BYTE_SIZE);
-			uint32_t val = chunks[offset];
-			result.chunks.push_back(0);
-
-			// Whether we'll need to keep track of overflow next time
-			bool nextOverflow = mostSignificantBit(val) && mostSignificantBit(swap);
-
-			if (nextOverflow)
-			{
-				swap &= 0x7fffffff;
-				val &= 0x7fffffff;
-			}
-
-			result.chunks[offset] = val + swap;
-			overflow = nextOverflow;
+			return subtractVal(static_cast<unsigned long long>(-other));
 		}
-
-		if (overflow)
+		else
 		{
-			result.chunks.push_back(1);
+			return addVal(static_cast<unsigned long long>(other));
 		}
+	}
 
-		return result;
+	BigInt operator+(const long& other)
+	{
+		
+		if (other < 0)
+		{
+			return subtractVal(static_cast<unsigned long long>(-other));
+		}
+		else
+		{
+			return addVal(static_cast<unsigned long long>(other));
+		}
+	}
+
+	BigInt operator+(const long long& other)
+	{
+		if (other < 0)
+		{
+			return subtractVal(static_cast<unsigned long long>(-other));
+		}
+		else
+		{
+			return addVal(static_cast<unsigned long long>(other));
+		}
+	}
+
+	BigInt operator+(const unsigned int& other)
+	{
+		unsigned long long absval = static_cast<unsigned long long>(other);
+		return addVal(absval);
+	}
+
+	BigInt operator+(const unsigned long& other)
+	{
+		unsigned long long absval = static_cast<unsigned long long>(other);
+		return addVal(absval);
+	}
+
+	BigInt operator+(const unsigned long long& other)
+	{
+		return addVal(other);
+	}
+
+	// TODO: Add floating point support
+
+	BigInt operator+(const BigInt& other)
+	{
+		if (other.sign)
+		{
+			return addBigInt(other);
+		}
+		else
+		{
+			return subtractBigInt(other);
+		}
 	}
 	
+	////////////////////////////
+	// Operators : +=
+	////////////////////////////
+	
+	// TODO: Rewrite this to actually work!
 	const BigInt& operator+=(const int &other)
 	{
 		// Doesn't work if either one is negative
 		//if (other < 0) return *this -= -other;
 
-		uint32_t swap;
+		chunk swap;
 		bool overflow = false;
 
 		for (unsigned int offset = 0; offset * _CHUNK_BYTE_SIZE < sizeof(other); ++offset)
@@ -197,9 +236,62 @@ public:
 		return *this;
 	}
 
+private:
+	////////////////////////////
+	// Operator helper function
+	////////////////////////////
 
+	// Adds our number to a normal integer value and returns the result
+	BigInt addVal(const unsigned long long& other)
+	{
+		BigInt result;
 
+		chunk val, swap;
+		bool overflow = false;
 
+		for (unsigned int offset = 0; offset * _CHUNK_BYTE_SIZE < sizeof(other); ++offset)
+		{
+			memcpy(&swap, &other, _CHUNK_BYTE_SIZE);
+			val = chunks[offset] + swap;
+
+			if (overflow)
+			{
+				// If there was overflow in the last calculation, carry the one
+				++val;
+			}
+
+			overflow = (val <= swap);
+			result.chunks.push_back(val);
+		}
+
+		if (overflow)
+		{
+			result.chunks.push_back(1);
+		}
+
+		return result;
+	}
+
+	BigInt addBigInt(const BigInt& other)
+	{
+		// TODO: implement
+		return BigInt(0);
+	}
+
+	BigInt subtractVal(const unsigned long long &other)
+	{
+		BigInt result;
+
+		// TODO: add this code
+
+		return result;
+	}
+
+	BigInt subtractBigInt(const BigInt& other)
+	{
+		// TODO: implement
+		return BigInt(0);
+	}
 
 public:
 	// Removes any leading empty chunks
@@ -218,7 +310,7 @@ private:
 	{
 		int emptychunks = 0;
 
-		for (std::vector<uint32_t>::reverse_iterator it = chunks.rbegin(); it != chunks.rend() && *it == 0; ++it)
+		for (std::vector<chunk>::reverse_iterator it = chunks.rbegin(); it != chunks.rend() && *it == 0; ++it)
 		{
 			++emptychunks;
 		}
@@ -232,7 +324,7 @@ private:
 	// Member Variables
 	////////////////////////////
 private:
-	std::vector<uint32_t> chunks;
+	std::vector<chunk> chunks;
 
 	// Our current sign - true for positive, false for negative
 	bool sign;
