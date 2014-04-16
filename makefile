@@ -14,12 +14,15 @@ release: build
 debug: COMP += -g
 debug: build
 
-build: Main.o
+build: tests Main.o
 	$(LINK) BigNum $(OBJS)/Main.o
+
+tests: Tests.o
+	$(LINK) Testing $(OBJS)/Tests.o
 
 %.o: $(CODE)/%.cpp
 	$(COMP) $(CODE)/$*.cpp -o $(OBJS)/$*.o
 
 clean:
 	@echo Cleaning binaries
-	@rm -f $(OBJS)/* BigNum
+	@rm -f $(OBJS)/* BigNum Testing

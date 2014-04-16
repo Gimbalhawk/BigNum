@@ -14,11 +14,15 @@ int main(int argc, char* argv[])
 //	BigInt one(1);
 //	BigInt one2(1);
 
-	int i = 1;
+	//int i = 1;
 
 	BigInt zero(0);
-	zero = zero + i;
-	zero = zero + (long)i;
+	zero = zero + 1;
+	//zero = zero + (long)i;
+
+	bool b = 5 == 5.0f;
+
+	cout << b << endl;
 
 //	one += 1;
 //	one2 += 1;

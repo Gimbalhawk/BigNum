@@ -1,3 +1,6 @@
+#ifndef BIGINT_H
+#define BIGINT_H
+
 #include <stdint.h>
 #include <string>
 #include <cstring>
@@ -24,6 +27,10 @@ public:
 	BigInt() { initialize(0, true); }
 	BigInt(int num) { initialize(num >= 0 ? num : -num, num >= 0); }
 	BigInt(long num) { initialize(num >= 0 ? num : -num, num >= 0); }
+	BigInt(long long num) { initialize(num >= 0 ? num : -num, num >= 0); }
+	BigInt(unsigned int num) { initialize(num, true); }
+	BigInt(unsigned long num) { initialize(num, true); }
+	BigInt(unsigned long long num) { initialize(num, true); }
 	//BigInt(BigInt& other)
 	//{
 
@@ -34,7 +41,7 @@ public:
 	//~BigInt() { if (chunks) delete [] chunks; chunks = NULL; }
 	
 private:
-	void initialize(unsigned long num, bool pos)
+	void initialize(unsigned long long num, bool pos)
 	{
 		chunks.clear();
 		sign = pos;
@@ -79,35 +86,103 @@ public:
 	////////////////////////////
 	// Operators : Equality 
 	////////////////////////////
+
 	bool operator==(const int &other) const
 	{
-		int comp = other > 0 ? other : -other;
-
-		// If the two numbers have different signs then the can't be equal
-		if ((sign && comp != other) || (!sign && comp == other)) return false;
-
-		unsigned int memsize = chunks.size() * _CHUNK_BYTE_SIZE;
-		if (memsize < sizeof(int))
+		if (other >= 0 && sign)
 		{
-			if (memcmp(&chunks.front(), &comp, memsize) != 0) return false;
+			// Both are positive. Basic case.
+			equalsVal(static_cast<unsigned long long>(other));
+		}
+		else if (other < 0 && !sign)
+		{
+			// Both are negative, so test whether their absolute values are the same.
+			equalsVal(static_cast<unsigned long long>(-other));
+		}
+		else 
+		{
+			// Signs don't match
+			return false;
+		}
+	}
 
-			// If an int is larger than our memsize, then compare the remaining bytes
-			// of the int with zero. This can happen if our value is 0 or if we're on
-			// a 64 bit machine and we only have one chunk of memory.
-			chunk zero = 0;
-			return memcmp(&zero, &comp + memsize, sizeof(chunk) - memsize) == 0;
+	bool operator==(const long &other) const
+	{
+		if (other >= 0 && sign)
+		{
+			// Both are positive. Basic case.
+			equalsVal(static_cast<unsigned long long>(other));
+		}
+		else if (other < 0 && !sign)
+		{
+			// Both are negative, so test whether their absolute values are the same.
+			equalsVal(static_cast<unsigned long long>(-other));
+		}
+		else 
+		{
+			// Signs don't match
+			return false;
+		}
+	}
+
+	bool operator==(const long long &other) const
+	{
+		if (other >= 0 && sign)
+		{
+			// Both are positive. Basic case.
+			equalsVal(static_cast<unsigned long long>(other));
+		}
+		else if (other < 0 && !sign)
+		{
+			// Both are negative, so test whether their absolute values are the same.
+			equalsVal(static_cast<unsigned long long>(-other));
+		}
+		else 
+		{
+			// Signs don't match
+			return false;
+		}
+	}
+
+	bool operator==(const unsigned int& other) const
+	{
+		if (sign)
+		{
+			equalsVal(static_cast<unsigned long long>(other));
 		}
 		else
 		{
-			if (memcmp(&chunks[0], &comp, sizeof(int)) != 0) return false;
-
-			// Can fail if sizeof(int) isn't a multiple of 4, but that should
-			// never happen, right?
-			return onlyEmptyChunksRemain(sizeof(int) / _CHUNK_BYTE_SIZE + 1);
+			// A negative BigInt can never equal an unsigned number
+			return false;
 		}
-
-		return false;
 	}
+
+	bool operator==(const unsigned long& other) const
+	{
+		if (sign)
+		{
+			equalsVal(static_cast<unsigned long long>(other));
+		}
+		else
+		{
+			// A negative BigInt can never equal an unsigned number
+			return false;
+		}
+	}
+
+	bool operator==(const unsigned long long& other) const
+	{
+		if (sign)
+		{
+			equalsVal(other);
+		}
+		else
+		{
+			// A negative BigInt can never equal an unsigned number
+			return false;
+		}
+	}
+
 	bool operator==(const BigInt &other) const
 	{
 		unsigned int index = 0;
@@ -127,56 +202,71 @@ public:
 	////////////////////////////
 	BigInt operator+(const int& other)
 	{
+		BigInt result(0);
+
 		if (other < 0)
 		{
-			return subtractVal(static_cast<unsigned long long>(-other));
+			subtractVal(-other, result);
 		}
 		else
 		{
-			return addVal(static_cast<unsigned long long>(other));
+			addVal(other, result);
 		}
+
+		return result;
 	}
 
 	BigInt operator+(const long& other)
 	{
-		
+		BigInt result(0);
+
 		if (other < 0)
 		{
-			return subtractVal(static_cast<unsigned long long>(-other));
+			subtractVal(-other, result);
 		}
 		else
 		{
-			return addVal(static_cast<unsigned long long>(other));
+			addVal(other, result);
 		}
+
+		return result;
 	}
 
 	BigInt operator+(const long long& other)
 	{
+		BigInt result(0);
+
 		if (other < 0)
 		{
-			return subtractVal(static_cast<unsigned long long>(-other));
+			subtractVal(-other, result);
 		}
 		else
 		{
-			return addVal(static_cast<unsigned long long>(other));
+			addVal(other, result);
 		}
+
+		return result;
 	}
 
 	BigInt operator+(const unsigned int& other)
 	{
-		unsigned long long absval = static_cast<unsigned long long>(other);
-		return addVal(absval);
+		BigInt result(0);
+		addVal(other, result);
+		return result;
 	}
 
 	BigInt operator+(const unsigned long& other)
 	{
-		unsigned long long absval = static_cast<unsigned long long>(other);
-		return addVal(absval);
+		BigInt result(0);
+		addVal(other, result);
+		return result;
 	}
 
 	BigInt operator+(const unsigned long long& other)
 	{
-		return addVal(other);
+		BigInt result(0);
+		addVal(other, result);
+		return result;
 	}
 
 	// TODO: Add floating point support
@@ -241,18 +331,45 @@ private:
 	// Operator helper function
 	////////////////////////////
 
-	// Adds our number to a normal integer value and returns the result
-	BigInt addVal(const unsigned long long& other)
+	bool equalsVal(const unsigned long long& other) const
 	{
-		BigInt result;
+		unsigned int memsize = chunks.size() * _CHUNK_BYTE_SIZE;
+		if (memsize < sizeof(other))
+		{
+			if (memcmp(&chunks.front(), &other, memsize) != 0) return false;
+
+			// If an int is larger than our memsize, then compare the remaining bytes
+			// of the int with zero.
+			chunk zero = 0;
+			return memcmp(&zero, &other + memsize, sizeof(chunk) - memsize) == 0;
+		}
+		else
+		{
+			if (memcmp(&chunks[0], &other, sizeof(other)) != 0) return false;
+
+			// Can fail if sizeof(other) isn't a multiple of 4, but that should
+			// never happen, right?
+			return onlyEmptyChunksRemain(sizeof(other) / _CHUNK_BYTE_SIZE + 1);
+		}
+
+		return false;
+	}
+
+	// Adds our number to a normal integer value
+	void addVal(const unsigned long long& other, BigInt& result)
+	{
+		// TODO: deal with negative BigInts
+		//BigInt result;
 
 		chunk val, swap;
 		bool overflow = false;
 
 		for (unsigned int offset = 0; offset * _CHUNK_BYTE_SIZE < sizeof(other); ++offset)
 		{
-			memcpy(&swap, &other, _CHUNK_BYTE_SIZE);
-			val = chunks[offset] + swap;
+			memcpy(&swap, &other + offset*_CHUNK_BYTE_SIZE, _CHUNK_BYTE_SIZE);
+			
+			val = offset < chunks.size() ? chunks[offset] : 0;
+			val += swap;
 
 			if (overflow)
 			{
@@ -269,22 +386,18 @@ private:
 			result.chunks.push_back(1);
 		}
 
-		return result;
+		//return result;
+	}
+
+	void subtractVal(const unsigned long long &other, BigInt& result)
+	{
+		// TODO: implement
 	}
 
 	BigInt addBigInt(const BigInt& other)
 	{
 		// TODO: implement
 		return BigInt(0);
-	}
-
-	BigInt subtractVal(const unsigned long long &other)
-	{
-		BigInt result;
-
-		// TODO: add this code
-
-		return result;
 	}
 
 	BigInt subtractBigInt(const BigInt& other)
@@ -329,3 +442,5 @@ private:
 	// Our current sign - true for positive, false for negative
 	bool sign;
 };
+
+#endif
