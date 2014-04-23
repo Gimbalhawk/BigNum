@@ -34,7 +34,7 @@ public:
 
 	// TODO: Add float support
 
-	BigInt(BigInt& other) { initialize(other); }
+	//BigInt(BigInt& other) { initialize(other); }
 
 	//~BigInt() { if (chunks) delete [] chunks; chunks = NULL; }
 	
