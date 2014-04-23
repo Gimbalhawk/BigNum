@@ -1,4 +1,6 @@
 BigNum
 ======
 
-Reinventing the wheel can be fun!
+This is a library for handling arbitrary precision math. At the moment I'm working on integers, but once that works I plan on adding rational numbers as well.
+
+This has been done before, but reinventing the wheel can be fun!
