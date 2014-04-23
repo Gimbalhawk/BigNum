@@ -31,12 +31,10 @@ public:
 	BigInt(unsigned int num) { initialize(num, true); }
 	BigInt(unsigned long num) { initialize(num, true); }
 	BigInt(unsigned long long num) { initialize(num, true); }
-	//BigInt(BigInt& other)
-	//{
 
-	//}
-	//BigInt(unsigned int num) { initialize(num, true); }
-	//BigInt(long num)
+	// TODO: Add float support
+
+	BigInt(BigInt& other) { initialize(other); }
 
 	//~BigInt() { if (chunks) delete [] chunks; chunks = NULL; }
 	
@@ -64,9 +62,10 @@ private:
 		chunks.clear();
 		sign = other.sign;
 
-		for (unsigned int i = 0; i < other.chunks.size(); ++i) chunks.push_back(0);
-
-		memcpy(&chunks[0], &other.chunks[0], memsize());
+		for (unsigned int i = 0; i < other.chunks.size(); ++i) 
+		{
+			chunks.push_back(other.chunks[i]);
+		}
 	}
 
 	// Checks whether there are any non-zero bits at or after the chunk given by the index
