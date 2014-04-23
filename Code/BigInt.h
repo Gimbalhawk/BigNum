@@ -8,11 +8,11 @@
 #include <vector>
 
 // We store the number in 32 bit chunks
-
 #define _CHUNK_BYTE_SIZE 4
 #define _CHUNK_BIT_SIZE 32
-#define _CHUNK_BIT_MASK 0x00000000
 
+
+// A signed-magnitude representation of an arbitrarily large integer.
 class BigInt
 {
 	typedef uint32_t chunk;
