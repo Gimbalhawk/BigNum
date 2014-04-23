@@ -18,11 +18,12 @@ int main(int argc, char* argv[])
 
 	BigInt zero(0);
 	zero = zero + 1;
+	zero = zero + -1;
 	//zero = zero + (long)i;
 
-	bool b = 5 == 5.0f;
+	//bool b = 5 == 5.0f;
 
-	cout << b << endl;
+	//cout << b << endl;
 
 //	one += 1;
 //	one2 += 1;

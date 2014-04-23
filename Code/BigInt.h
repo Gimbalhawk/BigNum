@@ -202,74 +202,65 @@ public:
 	////////////////////////////
 	BigInt operator+(const int& other)
 	{
-		BigInt result(0);
-
 		if (other < 0)
 		{
-			subtractVal(-other, result);
+			return performValueAddition(-other, false);
 		}
 		else
 		{
-			addVal(other, result);
+			return performValueAddition(other, true);
 		}
-
-		return result;
 	}
 
 	BigInt operator+(const long& other)
 	{
-		BigInt result(0);
-
 		if (other < 0)
 		{
-			subtractVal(-other, result);
+			return performValueAddition(-other, false);
 		}
 		else
 		{
-			addVal(other, result);
+			return performValueAddition(other, true);
 		}
-
-		return result;
 	}
 
 	BigInt operator+(const long long& other)
 	{
-		BigInt result(0);
-
 		if (other < 0)
 		{
-			subtractVal(-other, result);
+			return performValueAddition(-other, false);
 		}
 		else
 		{
-			addVal(other, result);
+			return performValueAddition(other, true);
 		}
-
-		return result;
 	}
 
 	BigInt operator+(const unsigned int& other)
 	{
-		BigInt result(0);
-		addVal(other, result);
-		return result;
+		return performValueAddition(other, true);
 	}
 
 	BigInt operator+(const unsigned long& other)
 	{
-		BigInt result(0);
-		addVal(other, result);
-		return result;
+		return performValueAddition(other, true);
 	}
 
 	BigInt operator+(const unsigned long long& other)
 	{
-		BigInt result(0);
-		addVal(other, result);
-		return result;
+		return performValueAddition(other, true);
 	}
 
 	// TODO: Add floating point support
+	BigInt operator+(const float& other)
+	{
+		return BigInt(*this);
+	}
+
+	BigInt operator+(const double& other)
+	{
+		return BigInt(*this);
+	}
 
 	BigInt operator+(const BigInt& other)
 	{
@@ -281,6 +272,77 @@ public:
 		{
 			return subtractBigInt(other);
 		}
+	}
+
+	////////////////////////////
+	// Operators : -
+	////////////////////////////
+	BigInt operator-(const int& other)
+	{
+		if (other < 0)
+		{
+			return performValueSubtraction(-other, false);
+		}
+		else
+		{
+			return performValueSubtraction(other, true);
+		}
+	}
+
+	BigInt operator-(const long& other)
+	{
+		if (other < 0)
+		{
+			return performValueSubtraction(-other, false);
+		}
+		else
+		{
+			return performValueSubtraction(other, true);
+		}
+	}
+
+	BigInt operator-(const long long& other)
+	{
+		if (other < 0)
+		{
+			return performValueSubtraction(-other, false);
+		}
+		else
+		{
+			return performValueSubtraction(other, true);
+		}
+	}
+
+	BigInt operator-(const unsigned int& other)
+	{
+		return performValueSubtraction(other, true);
+	}
+
+	BigInt operator-(const unsigned long& other)
+	{
+		return performValueSubtraction(other, true);
+	}
+
+	BigInt operator-(const unsigned long long& other)
+	{
+		return performValueSubtraction(other, true);
+	}
+
+	// TODO: Add floating point support
+	BigInt operator-(const float& other)
+	{
+		return BigInt(*this);
+	}
+
+	BigInt operator-(const double& other)
+	{
+		return BigInt(*this);
+	}
+
+	BigInt operator-(const BigInt& other)
+	{
+		// TODO: implement
+		return BigInt(*this);
 	}
 	
 	////////////////////////////
@@ -355,12 +417,47 @@ private:
 		return false;
 	}
 
-	// Adds our number to a normal integer value
+	BigInt performValueAddition(const unsigned long long& other, const bool othersign)
+	{
+		BigInt result(0);
+
+		// If the numbers are both positive or both negative,
+		// adding them together will result in adding their values.
+		// Otherwise their values are subtracted.
+		if ((sign && othersign) || (!sign && !othersign))
+		{
+			addVal(other, result);
+		}
+		else
+		{
+			subtractVal(other, result);
+		}
+
+		return result;
+	}
+
+	BigInt performValueSubtraction(const unsigned long long& other, const bool othersign)
+	{
+		BigInt result(0);
+
+		// If the numbers are both positive or both negative,
+		// subtracting them will result in subtracting their values.
+		// Otherwise their values are added.
+		if ((sign && othersign) || (!sign && !othersign))
+		{
+			subtractVal(other, result);
+		}
+		else
+		{
+			addVal(other, result);
+		}
+
+		return result;
+	}
+
+	// Adds our absolute value with that of an integer
 	void addVal(const unsigned long long& other, BigInt& result)
 	{
-		// TODO: deal with negative BigInts
-		//BigInt result;
-
 		chunk val, swap;
 		bool overflow = false;
 
@@ -385,10 +482,10 @@ private:
 		{
 			result.chunks.push_back(1);
 		}
-
-		//return result;
 	}
 
+	// Subtracts a value from this big int's absolute value, which may
+	// cause our sign to flip
 	void subtractVal(const unsigned long long &other, BigInt& result)
 	{
 		// TODO: implement
