@@ -184,6 +184,11 @@ public:
 
 	bool operator==(const BigInt &other) const
 	{
+		if (sign != other.sign)
+		{
+			return false;
+		}
+
 		unsigned int index = 0;
 
 		while (index < chunks.size() && index < other.chunks.size())

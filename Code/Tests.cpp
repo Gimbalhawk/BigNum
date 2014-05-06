@@ -1,8 +1,5 @@
 #include <iostream>
 
-using namespace std;
+#include "Tests.h"
 
-int main()
-{
-	
-}
+using namespace std;
