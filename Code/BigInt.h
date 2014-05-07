@@ -400,14 +400,23 @@ private:
 	bool equalsVal(const unsigned long long& other) const
 	{
 		unsigned int memsize = chunks.size() * _CHUNK_BYTE_SIZE;
+		
+		if (memsize == 0)
+		{
+			// We don't want to memcmp an empty array
+			return other == 0;
+		}
 		if (memsize < sizeof(other))
 		{
-			if (memcmp(&chunks.front(), &other, memsize) != 0) return false;
+			if (memcmp(&chunks.front(), &other, memsize) != 0) 
+			{
+				return false;
+			}
 
 			// If an int is larger than our memsize, then compare the remaining bytes
 			// of the int with zero.
 			chunk zero = 0;
-			return memcmp(&zero, &other + memsize, sizeof(chunk) - memsize) == 0;
+			return memcmp(&zero, &other + memsize, sizeof(unsigned long long) - memsize) == 0;
 		}
 		else
 		{
