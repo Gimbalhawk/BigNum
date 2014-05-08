@@ -6,7 +6,7 @@
 class Tests : public CxxTest::TestSuite
 {
 public:
-	void testEquality(void) 
+	void testEquality() 
 	{ 
 		BigInt zero(0);
 		BigInt one(1);
@@ -35,11 +35,12 @@ public:
 
 	void testAddition() 
 	{
-
+		
 	}
 
 	void testSubtraction() 
 	{
 
 	}
+
 };

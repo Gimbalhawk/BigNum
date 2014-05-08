@@ -11,7 +11,6 @@
 #define _CHUNK_BYTE_SIZE 4
 #define _CHUNK_BIT_SIZE 32
 
-
 // A signed-magnitude representation of an arbitrarily large integer.
 class BigInt
 {
@@ -44,10 +43,14 @@ private:
 		chunks.clear();
 		sign = pos;
 
-		if (num == 0) return;
+		if (num == 0)
+		{
+			return;
+		}
 		
-		// number of 32-bit chunks that make up a long (hurray for lack of standardization!)
-		int numchunks = sizeof(num) / _CHUNK_BYTE_SIZE; 
+		// Number of 32-bit chunks that make up a long long (hurray for lack of standardization!)
+		int numchunks = sizeof(num) / _CHUNK_BYTE_SIZE;
+
 		// Add the appropriate number of chunks to the vector
 		for (int i = 0; i++ < numchunks; chunks.push_back(0));
 
@@ -57,7 +60,7 @@ private:
 		pack();
 	}
 
-	void initialize(BigInt& other)
+	void initialize(const BigInt& other)
 	{
 		chunks.clear();
 		sign = other.sign;
@@ -75,13 +78,9 @@ private:
 		return true;
 	}
 
-	inline bool mostSignificantBit(int i)
-	{
-		return (i & 0x80000000) != 0;
-	}
-
 	
 public:
+
 	////////////////////////////
 	// Operators : Equality 
 	////////////////////////////
@@ -91,12 +90,12 @@ public:
 		if (other >= 0 && sign)
 		{
 			// Both are positive. Basic case.
-			equalsVal(static_cast<unsigned long long>(other));
+			return equalsVal(static_cast<unsigned long long>(other));
 		}
 		else if (other < 0 && !sign)
 		{
 			// Both are negative, so test whether their absolute values are the same.
-			equalsVal(static_cast<unsigned long long>(-other));
+			return equalsVal(static_cast<unsigned long long>(-other));
 		}
 		else 
 		{
@@ -110,12 +109,12 @@ public:
 		if (other >= 0 && sign)
 		{
 			// Both are positive. Basic case.
-			equalsVal(static_cast<unsigned long long>(other));
+			return equalsVal(static_cast<unsigned long long>(other));
 		}
 		else if (other < 0 && !sign)
 		{
 			// Both are negative, so test whether their absolute values are the same.
-			equalsVal(static_cast<unsigned long long>(-other));
+			return equalsVal(static_cast<unsigned long long>(-other));
 		}
 		else 
 		{
@@ -129,12 +128,12 @@ public:
 		if (other >= 0 && sign)
 		{
 			// Both are positive. Basic case.
-			equalsVal(static_cast<unsigned long long>(other));
+			return equalsVal(static_cast<unsigned long long>(other));
 		}
 		else if (other < 0 && !sign)
 		{
 			// Both are negative, so test whether their absolute values are the same.
-			equalsVal(static_cast<unsigned long long>(-other));
+			return equalsVal(static_cast<unsigned long long>(-other));
 		}
 		else 
 		{
@@ -147,7 +146,7 @@ public:
 	{
 		if (sign)
 		{
-			equalsVal(static_cast<unsigned long long>(other));
+			return equalsVal(static_cast<unsigned long long>(other));
 		}
 		else
 		{
@@ -160,7 +159,7 @@ public:
 	{
 		if (sign)
 		{
-			equalsVal(static_cast<unsigned long long>(other));
+			return equalsVal(static_cast<unsigned long long>(other));
 		}
 		else
 		{
@@ -173,7 +172,7 @@ public:
 	{
 		if (sign)
 		{
-			equalsVal(other);
+			return equalsVal(other);
 		}
 		else
 		{
@@ -372,7 +371,8 @@ public:
 			}
 
 			// Whether we'll need to keep track of overflow next time
-			bool nextOverflow = mostSignificantBit(chunks[offset]) && mostSignificantBit(swap);
+			//bool nextOverflow = mostSignificantBit(chunks[offset]) && mostSignificantBit(swap);
+			bool nextOverflow = false;
 
 			if (nextOverflow)
 			{
@@ -394,7 +394,7 @@ public:
 
 private:
 	////////////////////////////
-	// Operator helper function
+	// Operator helper functions
 	////////////////////////////
 
 	bool equalsVal(const unsigned long long& other) const
@@ -413,10 +413,12 @@ private:
 				return false;
 			}
 
-			// If an int is larger than our memsize, then compare the remaining bytes
-			// of the int with zero.
-			chunk zero = 0;
-			return memcmp(&zero, &other + memsize, sizeof(unsigned long long) - memsize) == 0;
+			// We bitshift the comparison number by the number of bits
+			// currently in our chunks vector. This leaves only the portion
+			// of the number we haven't tested. If this portion contains any
+			// set bits, then our two numbers aren't equal.
+			unsigned testedBits = chunks.size() * _CHUNK_BIT_SIZE;
+			return (other >> testedBits) == 0;
 		}
 		else
 		{
@@ -456,7 +458,7 @@ private:
 		// If the numbers are both positive or both negative,
 		// subtracting them will result in subtracting their values.
 		// Otherwise their values are added.
-		if ((sign && othersign) || (!sign && !othersign))
+		if (sign == othersign)
 		{
 			subtractVal(other, result);
 		}
